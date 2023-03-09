@@ -1,4 +1,4 @@
-import { exec, execSync } from "child_process";
+import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import S3 from "aws-sdk/clients/s3";
@@ -6,11 +6,13 @@ import readdir from "recursive-readdir";
 import async from "async";
 
 export const convertToMultiFormat = async (videoName: string) => {
+  // get uploaded file path
   const videoPath = path.join(__dirname, "../../uploads/", videoName);
 
-  // convert video to 360p, 480p, 720p, 1080p
+  // get path to upload files
   const uploadPath = path.join(__dirname, "../../converted/", videoName);
-  // create folder if not exist
+
+  // create the folder if not exist
   if (!fs.existsSync(path.join(__dirname, "../../converted/", videoName))) {
     fs.mkdirSync(path.join(__dirname, "../../converted/", videoName));
   }
@@ -44,8 +46,7 @@ export const convertToHslFormat = async (videoName: string) => {
     fs.mkdirSync(path.join(__dirname, "../../processed/", videoName));
   }
 
-  // const command = `ffmpeg -i "${videoPath}" -codec: copy -start_number 0 -hls_time 15 -hls_list_size 0 -f hls "${outputPath}.m3u8"`;
-
+  //  TODO: check for available formats and convert them
   const commands = [
     `ffmpeg -i "${videoPath}/_360p.mp4" -codec: copy -start_number 0 -hls_time 15 -hls_list_size 0 -f hls "${uploadPath}/_360p.m3u8"`,
     `ffmpeg -i "${videoPath}/_480p.mp4" -codec: copy -start_number 0 -hls_time 15 -hls_list_size 0 -f hls "${uploadPath}/_480p.m3u8"`,
@@ -67,14 +68,7 @@ export const convertToHslFormat = async (videoName: string) => {
   console.log("Video converted successfully");
 
   // upload everything inside a folder to s3
-  const s3 = new S3({
-    region: "us-west-2",
-    accessKeyId: process.env.ACCESS_KEY,
-    secretAccessKey: process.env.SECRET_KEY,
-    signatureVersion: "v4",
-  });
-
-  await uploadFolderToS3(s3, uploadPath, videoName);
+  await uploadFolderToS3(uploadPath, videoName);
 
   if (fs.existsSync(uploadPath)) {
     fs.rmSync(uploadPath, { recursive: true });
@@ -82,10 +76,16 @@ export const convertToHslFormat = async (videoName: string) => {
 };
 
 export const uploadFolderToS3 = async (
-  s3: S3,
   folderPath: string,
   videoName: string
 ) => {
+  const s3 = new S3({
+    region: process.env.REGION,
+    accessKeyId: process.env.ACCESS_KEY,
+    secretAccessKey: process.env.SECRET_KEY,
+    signatureVersion: "v4",
+  });
+
   function getFiles(folderPath: any) {
     return fs.existsSync(folderPath) ? readdir(folderPath) : [];
   }
@@ -110,7 +110,7 @@ export const uploadFolderToS3 = async (
             s3.upload(
               {
                 Key,
-                Bucket: "test-vp/" + videoName,
+                Bucket: "test-vp/" + videoName.split("/").at(-1),
                 Body: fs.readFileSync(file),
               },
               (err: any) => {
