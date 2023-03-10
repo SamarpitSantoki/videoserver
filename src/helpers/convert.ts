@@ -4,6 +4,7 @@ import path from "path";
 import S3 from "aws-sdk/clients/s3";
 import readdir from "recursive-readdir";
 import async from "async";
+import { deleteFolder } from "./deleteFolder";
 
 export const convertToMultiFormat = async (videoName: string) => {
   // get uploaded file path
@@ -28,12 +29,7 @@ export const convertToMultiFormat = async (videoName: string) => {
     execSync(command);
   });
 
-  const deleteFolderRecursive = function (videoPath: string) {
-    if (fs.existsSync(videoPath)) {
-      fs.rmSync(videoPath, { recursive: true });
-    }
-  };
-  deleteFolderRecursive(videoPath);
+  deleteFolder(videoPath);
   console.log("Video converted successfully");
 };
 
@@ -58,12 +54,7 @@ export const convertToHslFormat = async (videoName: string) => {
     execSync(command);
   });
 
-  const deleteFolderRecursive = function (videoPath: string) {
-    if (fs.existsSync(videoPath)) {
-      fs.rmSync(videoPath, { recursive: true });
-    }
-  };
-  deleteFolderRecursive(videoPath);
+  deleteFolder(videoPath);
 
   console.log("Video converted successfully");
 
@@ -107,6 +98,8 @@ export const uploadFolderToS3 = async (
           const Key = file.replace(rootFolder, "");
           console.log(`uploading: [${Key}]`);
           return new Promise((res, rej) => {
+            // S3 ManagedUpload with callbacks are not supported in AWS SDK for JavaScript (v3).
+            // Please convert to `await client.upload(params, options).promise()`, and re-run aws-sdk-js-codemod.
             s3.upload(
               {
                 Key,
@@ -134,4 +127,6 @@ export const uploadFolderToS3 = async (
   }
 
   await deploy(folderPath);
+
+  deleteFolder(folderPath);
 };

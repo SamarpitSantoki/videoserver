@@ -10,7 +10,12 @@ const app = express();
 
 // set up middlewares
 app.use(cors());
-app.use(fileUpload());
+app.use(
+  fileUpload({
+    useTempFiles: true,
+    tempFileDir: "temp",
+  })
+);
 
 // uncomment this line to serve static files from the processed folder
 // app.use(express.static("processed"));
