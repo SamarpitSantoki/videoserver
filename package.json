@@ -23,6 +23,7 @@
     "express-fileupload": "^1.4.0",
     "node-ts": "^5.1.2",
     "nodemon": "^2.0.21",
-    "recursive-readdir": "^2.2.3"
+    "recursive-readdir": "^2.2.3",
+    "tsc": "^2.0.4"
   }
 }
