@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@types/async": "^3.2.18",
+    "@types/cors": "^2.8.13",
     "@types/express-fileupload": "^1.4.1",
     "@types/recursive-readdir": "^2.2.1",
     "async": "^3.2.4",
